@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+*.egg-info/
+
+# Node / React
+node_modules/
+build/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# AWS
+*.pem
+.aws/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

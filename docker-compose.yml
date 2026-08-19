@@ -1,0 +1,23 @@
+services:
+  backend-flask:
+    environment:
+      FRONTEND_URL: "http://localhost:8080"
+      BACKEND_URL: "http://localhost:4567"
+    build: ./backend-flask
+    ports:
+      - "4567:4567"
+    volumes:
+      - ./backend-flask:/backend-flask
+  frontend-react:
+    environment:
+      REACT_APP_BACKEND_URL: "http://localhost:4567"
+    build: ./frontend-react
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend-react:/frontend-react
+
+networks: 
+  internal-network:
+    driver: bridge
+    name: TheoryTrove
