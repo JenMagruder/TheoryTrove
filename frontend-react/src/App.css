@@ -1,38 +1,47 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+
+:root {
+  --bg: #0a0a12;
+  --card-bg: #0d0d1e;
+  --text: #f5ede0;
+  --gold: #c9a227;
+  --emerald: #1a6b4a;
+  --sapphire: #0d3b6e;
+  --rose: #8b1a4a;
+  --violet: #4a1a8b;
+  --crimson: #8b2500;
+  --steel-blue: #2a4a6b;
+  --border-dark: #2a1a3a;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'IM Fell English', Georgia, serif;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+h1, h2, h3 {
+  font-family: 'IM Fell English', Georgia, serif;
+  color: var(--gold);
+  font-weight: normal;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+input, textarea, button {
+  font-family: 'IM Fell English', Georgia, serif;
+}
+
+a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--gold);
 }
