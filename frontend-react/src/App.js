@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
+import Rules from './Rules';
+import Contact from './Contact';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4567';
 
@@ -19,7 +22,19 @@ const Divider = ({ src, alt, height = 100 }) => (
   </div>
 );
 
-function App() {
+const Footer = () => (
+  <footer style={{ borderTop: '1px solid var(--border-dark)', padding: '1.5rem 2rem', textAlign: 'center' }}>
+    <div style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.5, letterSpacing: '2px', marginBottom: '0.5rem' }}>✦ &nbsp; ✦ &nbsp; ✦</div>
+    <p style={{ fontSize: '12px', marginBottom: '0.75rem' }}>
+      <a href="https://ko-fi.com/theorytrove" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'none', letterSpacing: '1px' }}>
+        ✦ Support the Trove
+      </a>
+    </p>
+    <p style={{ fontSize: '11px', opacity: 0.3, margin: 0, fontStyle: 'italic' }}>Unofficial fan site. All characters and lore belong to Sarah J. Maas and Bloomsbury Publishing. No affiliation or endorsement implied.</p>
+  </footer>
+);
+
+function Home() {
   const [theories, setTheories] = useState([]);
   const [theoryText, setTheoryText] = useState('');
   const [tags, setTags] = useState('');
@@ -72,6 +87,17 @@ function App() {
     }
   };
 
+  const reactToTheory = async (theoryId) => {
+    try {
+      await fetch(`${BACKEND_URL}/api/theories/${theoryId}/react`, {
+        method: 'POST',
+      });
+      fetchTheories();
+    } catch (err) {
+      console.error('Failed to react', err);
+    }
+  };
+
   const filteredTheories = activeFilter
     ? theories.filter(t => t.tags && t.tags.includes(activeFilter))
     : theories;
@@ -98,9 +124,10 @@ function App() {
           <div style={{ height: '1px', width: '60px', background: 'var(--gold)', opacity: 0.4 }}></div>
         </div>
         <nav style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
-          <a href="#theories">✦ Theories</a>
-          <a href="#submit">✦ Submit</a>
-          <a href="#rules">✦ Rules of the Trove</a>
+          <Link to="/" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: '13px', letterSpacing: '1px' }}>✦ Theories</Link>
+          <Link to="/" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: '13px', letterSpacing: '1px' }}>✦ Submit</Link>
+          <Link to="/rules" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: '13px', letterSpacing: '1px' }}>✦ Rules of the Trove</Link>
+          <Link to="/contact" style={{ color: 'var(--text)', textDecoration: 'none', fontSize: '13px', letterSpacing: '1px' }}>✦ Contact</Link>
         </nav>
       </header>
 
@@ -170,14 +197,22 @@ function App() {
                   </div>
                 )}
                 <p style={{ margin: '0.75rem 0 0.75rem', fontSize: '15px', lineHeight: 1.7, fontStyle: 'italic' }}>"{theory.theory_text}"</p>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                   {theory.tags && theory.tags.map((tag, j) => (
                     <span key={j} style={{ color, fontSize: '11px', border: `1px solid ${color}`, padding: '1px 8px', letterSpacing: '1px' }}>{tag}</span>
                   ))}
                 </div>
-                <p style={{ margin: 0, fontSize: '11px', opacity: 0.4, letterSpacing: '1px' }}>
-                  ✦ &nbsp; {theory.reference || 'No reference'} &nbsp; · &nbsp; {new Date(theory.sk).toLocaleDateString()}
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '11px', opacity: 0.4, letterSpacing: '1px' }}>
+                    ✦ &nbsp; {theory.reference || 'No reference'} &nbsp; · &nbsp; {new Date(theory.sk).toLocaleDateString()}
+                  </p>
+                  <button
+                    onClick={() => reactToTheory(theory.theory_id)}
+                    style={{ background: 'none', border: `1px solid ${color}`, color, padding: '2px 12px', fontSize: '13px', cursor: 'pointer', letterSpacing: '1px' }}
+                  >
+                    ✦ {theory.reactions || 0}
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -186,12 +221,21 @@ function App() {
 
       <Divider src="/compass-star.svg" alt="" height={80} />
 
-      <footer style={{ borderTop: '1px solid var(--border-dark)', padding: '1.5rem 2rem', textAlign: 'center' }}>
-        <div style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.5, letterSpacing: '2px', marginBottom: '0.5rem' }}>✦ &nbsp; ✦ &nbsp; ✦</div>
-        <p style={{ fontSize: '11px', opacity: 0.3, margin: 0, fontStyle: 'italic' }}>Unofficial fan site. All characters and lore belong to Sarah J. Maas and Bloomsbury Publishing. No affiliation or endorsement implied.</p>
-      </footer>
+      <Footer />
 
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/rules" element={<Rules />} />
+        <Route path="/contact" element={<Contact />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
