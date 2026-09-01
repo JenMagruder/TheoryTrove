@@ -103,7 +103,7 @@ def react_to_theory(theory_id):
     theory = items[0]
     table.update_item(
         Key={"pk": theory["pk"], "sk": theory["sk"]},
-        UpdateExpression=f"SET reactions.#rt = if_not_exists(reactions.#rt, :zero) + :inc",
+        UpdateExpression="SET reactions.#rt = if_not_exists(reactions.#rt, :zero) + :inc",
         ExpressionAttributeNames={"#rt": reaction_type},
         ExpressionAttributeValues={":zero": 0, ":inc": 1}
     )
@@ -129,6 +129,26 @@ def contact():
         )
 
     return jsonify({"message": "Message sent"}), 200
+
+@app.route("/api/admin/theories/<theory_id>", methods=["DELETE"])
+def delete_theory(theory_id):
+    admin_key = request.headers.get("X-Admin-Key")
+    if admin_key != os.getenv("ADMIN_KEY"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    response = table.scan(
+        FilterExpression="theory_id = :id",
+        ExpressionAttributeValues={":id": theory_id}
+    )
+    items = response.get("Items", [])
+    if not items:
+        return jsonify({"error": "Theory not found"}), 404
+
+    theory = items[0]
+    table.delete_item(
+        Key={"pk": theory["pk"], "sk": theory["sk"]}
+    )
+    return jsonify({"message": "Theory deleted"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

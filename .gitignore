@@ -18,6 +18,14 @@ build/
 # AWS
 *.pem
 .aws/
+cert-validation.json
+task-definition.json
+trust-policy.json
+task-policy.json
+dns-record.json
+cert-validation-www.json
+cert-validation.json
+
 
 # OS
 .DS_Store
