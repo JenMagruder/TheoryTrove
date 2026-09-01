@@ -25,6 +25,9 @@ sns = boto3.client(
 )
 
 table = dynamodb.Table("theory-trove-theories")
+reactions_table = dynamodb.Table("theory-trove-reactions")
+
+VALID_REACTIONS = ["star", "flame", "heart", "moon", "sword", "mask"]
 
 @app.route("/api/health")
 def health():
@@ -57,7 +60,14 @@ def post_theory():
         "tags": tags,
         "reference": reference,
         "status": "active",
-        "reactions": 0
+        "reactions": {
+            "star": 0,
+            "flame": 0,
+            "heart": 0,
+            "moon": 0,
+            "sword": 0,
+            "mask": 0
+        }
     }
 
     table.put_item(Item=item)
@@ -65,6 +75,23 @@ def post_theory():
 
 @app.route("/api/theories/<theory_id>/react", methods=["POST"])
 def react_to_theory(theory_id):
+    data = request.get_json()
+    reaction_type = data.get("reaction_type", "star")
+
+    if reaction_type not in VALID_REACTIONS:
+        return jsonify({"error": "Invalid reaction type"}), 400
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    ip_reaction_key = f"{ip}#{reaction_type}"
+
+    try:
+        reactions_table.put_item(
+            Item={"theory_id": theory_id, "ip_reaction": ip_reaction_key},
+            ConditionExpression="attribute_not_exists(theory_id) AND attribute_not_exists(ip_reaction)"
+        )
+    except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+        return jsonify({"error": "Already reacted"}), 409
+
     response = table.scan(
         FilterExpression="theory_id = :id",
         ExpressionAttributeValues={":id": theory_id}
@@ -76,7 +103,8 @@ def react_to_theory(theory_id):
     theory = items[0]
     table.update_item(
         Key={"pk": theory["pk"], "sk": theory["sk"]},
-        UpdateExpression="SET reactions = if_not_exists(reactions, :zero) + :inc",
+        UpdateExpression=f"SET reactions.#rt = if_not_exists(reactions.#rt, :zero) + :inc",
+        ExpressionAttributeNames={"#rt": reaction_type},
         ExpressionAttributeValues={":zero": 0, ":inc": 1}
     )
     return jsonify({"message": "Reaction added"}), 200

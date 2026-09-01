@@ -16,6 +16,15 @@ const SERIES_COLORS = {
 
 const SERIES_LIST = Object.keys(SERIES_COLORS);
 
+const REACTION_TYPES = [
+  { key: 'star', emoji: '✦', label: 'Star' },
+  { key: 'flame', emoji: '🔥', label: 'Fireheart' },
+  { key: 'heart', emoji: '🖤', label: 'Mate Bond' },
+  { key: 'moon', emoji: '🌙', label: 'Night Court' },
+  { key: 'sword', emoji: '⚔️', label: 'TOG' },
+  { key: 'mask', emoji: '🎭', label: 'Dread Trove' },
+];
+
 const Divider = ({ src, alt, height = 100 }) => (
   <div style={{ textAlign: 'center', padding: '1rem 0', opacity: 0.08 }}>
     <img src={src} alt={alt} style={{ height: `${height}px`, filter: 'invert(1) sepia(1) saturate(2) hue-rotate(10deg)' }} />
@@ -41,6 +50,13 @@ function Home() {
   const [reference, setReference] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
   const [message, setMessage] = useState('');
+  const [reactedTheories, setReactedTheories] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('reactedTheories') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     fetchTheories();
@@ -87,12 +103,23 @@ function Home() {
     }
   };
 
-  const reactToTheory = async (theoryId) => {
+  const reactToTheory = async (theoryId, reactionType) => {
+    const key = `${theoryId}#${reactionType}`;
+    if (reactedTheories[key]) return;
+
     try {
-      await fetch(`${BACKEND_URL}/api/theories/${theoryId}/react`, {
+      const res = await fetch(`${BACKEND_URL}/api/theories/${theoryId}/react`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction_type: reactionType }),
       });
-      fetchTheories();
+
+      if (res.ok || res.status === 409) {
+        const updated = { ...reactedTheories, [key]: true };
+        setReactedTheories(updated);
+        localStorage.setItem('reactedTheories', JSON.stringify(updated));
+        fetchTheories();
+      }
     } catch (err) {
       console.error('Failed to react', err);
     }
@@ -189,6 +216,7 @@ function Home() {
         <div style={{ display: 'grid', gap: '1.25rem', maxWidth: '800px', margin: '0 auto' }}>
           {filteredTheories.map((theory, i) => {
             const color = getColor(theory.tags);
+            const reactions = theory.reactions || {};
             return (
               <div key={i} style={{ background: 'var(--card-bg)', border: `1px solid ${color}`, borderTop: `2px solid ${color}`, padding: '1.25rem', position: 'relative' }}>
                 {theory.tags && theory.tags.length > 0 && (
@@ -202,16 +230,34 @@ function Home() {
                     <span key={j} style={{ color, fontSize: '11px', border: `1px solid ${color}`, padding: '1px 8px', letterSpacing: '1px' }}>{tag}</span>
                   ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ margin: 0, fontSize: '11px', opacity: 0.4, letterSpacing: '1px' }}>
-                    ✦ &nbsp; {theory.reference || 'No reference'} &nbsp; · &nbsp; {new Date(theory.sk).toLocaleDateString()}
-                  </p>
-                  <button
-                    onClick={() => reactToTheory(theory.theory_id)}
-                    style={{ background: 'none', border: `1px solid ${color}`, color, padding: '2px 12px', fontSize: '13px', cursor: 'pointer', letterSpacing: '1px' }}
-                  >
-                    ✦ {theory.reactions || 0}
-                  </button>
+                <p style={{ margin: '0 0 0.75rem', fontSize: '11px', opacity: 0.4, letterSpacing: '1px' }}>
+                  ✦ &nbsp; {theory.reference || 'No reference'} &nbsp; · &nbsp; {new Date(theory.sk).toLocaleDateString()}
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {REACTION_TYPES.map(r => {
+                    const key = `${theory.theory_id}#${r.key}`;
+                    const reacted = reactedTheories[key];
+                    return (
+                      <button
+                        key={r.key}
+                        onClick={() => reactToTheory(theory.theory_id, r.key)}
+                        disabled={reacted}
+                        title={r.label}
+                        style={{
+                          background: reacted ? '#1a1a2e' : 'var(--card-bg)',
+                          border: `1px solid ${reacted ? '#333' : color}`,
+                          color: reacted ? '#444' : 'var(--text)',
+                          padding: '2px 8px',
+                          fontSize: '13px',
+                          cursor: reacted ? 'not-allowed' : 'pointer',
+                          opacity: reacted ? 0.5 : 1,
+                          borderRadius: '2px'
+                        }}
+                      >
+                        {r.emoji} {reactions[r.key] || 0}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
